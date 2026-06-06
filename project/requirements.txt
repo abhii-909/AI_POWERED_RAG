@@ -1,0 +1,18 @@
+# Core application
+streamlit>=1.41.0
+python-dotenv>=1.0.1
+
+# LangChain ecosystem
+langchain>=0.3.14
+langchain-core>=0.3.29
+langchain-community>=0.3.14
+langchain-experimental>=0.3.4
+langchain-text-splitters>=0.3.4
+langchain-groq>=0.2.4
+langchain-neo4j>=0.4.0
+
+# Document processing
+pypdf>=5.1.0
+
+# Neo4j driver
+neo4j>=5.26.0
