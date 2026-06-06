@@ -57,6 +57,7 @@ class GraphQueryEngine:
                 url=self.config.neo4j.uri,
                 username=self.config.neo4j.username,
                 password=self.config.neo4j.password,
+                database=self.config.neo4j.username,
             )
             self._graph.refresh_schema()
         return self._graph
@@ -66,7 +67,7 @@ class GraphQueryEngine:
         if self._chain is None:
             cypher_prompt = PromptTemplate(
                 input_variables=["schema", "question"],
-                template="""
+                template="""\
 You are an expert Neo4j Cypher developer.
 
 Use ONLY the schema below.
@@ -75,13 +76,20 @@ Schema:
 {schema}
 
 Rules:
-- Return ONLY Cypher.
-- Use labels exactly as shown in schema.
-- Use relationships exactly as shown in schema.
-- Use node properties exactly as shown in schema.
-- Do not invent labels.
-- Do not invent relationships.
-- Do not explain anything.
+- Return ONLY a valid Cypher query — no explanation, no markdown.
+- Use labels and relationship types EXACTLY as shown in the schema.
+- For string matching, ALWAYS use case-insensitive comparison:
+    toLower(n.id) CONTAINS toLower("search term")
+- Prefer CONTAINS over exact equality so partial names still match.
+- When asked "who works at X" or "employees of X", look for relationships
+  like WORKS_AT, EMPLOYED_BY, EMPLOYEE_OF, or any relationship connecting
+  Person nodes to Organization/Company nodes.
+- When asked about relationships between entities, return the full path:
+    MATCH (a)-[r]->(b) RETURN a, type(r), b
+- Always RETURN enough context: node ids/names, relationship types, and
+  connected node ids/names.
+- LIMIT results to 25 unless the question asks for a specific count.
+- Do NOT invent labels, relationships, or properties not in the schema.
 
 Question:
 {question}
@@ -98,6 +106,7 @@ Cypher:
                 return_intermediate_steps=True,
                 verbose=True,
                 allow_dangerous_requests=True,
+                top_k=25,
             )
 
         return self._chain
@@ -173,7 +182,7 @@ Cypher:
             raise ValueError("Question cannot be empty.")
 
         try:
-            response = self.chain({"question": cleaned_question})
+            response = self.chain({"query": cleaned_question})
         except Exception as exc:
             logger.exception("GraphRAG query failed")
             raise RuntimeError(f"Failed to process question: {exc}") from exc

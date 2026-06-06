@@ -173,7 +173,7 @@ def main() -> None:
 
         clear_graph = st.checkbox(
             "Clear existing graph before ingest",
-            value=False,
+            value=True,
             help="Remove prior nodes and relationships before storing the uploaded PDF.",
         )
 

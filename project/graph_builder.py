@@ -70,6 +70,7 @@ class GraphBuilder:
                 url=self.config.neo4j.uri,
                 username=self.config.neo4j.username,
                 password=self.config.neo4j.password,
+                database=self.config.neo4j.username,
             )
             self._graph.refresh_schema()
         return self._graph
